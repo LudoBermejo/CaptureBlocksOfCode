@@ -1,0 +1,29 @@
+{
+  "name": "filedrop",
+  "main": "filedrop.js",
+  "description": "Self-contained cross-browser pure JavaScript class for Drag & Drop and AJAX (multi) file upload.",
+  "keywords": [
+    "filedrop",
+    "ajax",
+    "file",
+    "upload",
+    "drag",
+    "drop"
+  ],
+  "authors": [
+    "Proger_XP <proger.xp@gmail.com> (http://proger.me)"
+  ],
+  "license": "public domain",
+  "homepage": "http://filedropjs.org",
+  "ignore": [],
+  "_release": "33f85ce84a",
+  "_resolution": {
+    "type": "branch",
+    "branch": "master",
+    "commit": "33f85ce84a1df890ab5d9dcf6d105c457b2f18b0"
+  },
+  "_source": "https://github.com/ProgerXP/FileDrop.git",
+  "_target": "*",
+  "_originalSource": "filedrop",
+  "_direct": true
+}

@@ -1,0 +1,23 @@
+{
+  "name": "CaptureBlack",
+  "homepage": "https://github.com/LudoBermejo/CaptureBlocksOfCode",
+  "authors": [
+    "Ludo Bermejo <ludo.bermejo@starzplayarabia.com>"
+  ],
+  "description": "",
+  "main": "",
+  "license": "MIT",
+  "ignore": [
+    "**/.*",
+    "node_modules",
+    "bower_components",
+    "test",
+    "tests"
+  ],
+  "dependencies": {
+    "filedrop": "*"
+  },
+  "devDependencies": {
+    "filedrop": "*"
+  }
+}

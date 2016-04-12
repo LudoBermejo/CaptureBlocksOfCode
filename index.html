@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>Capture blocks of code</title>
+
+    <script type="text/javascript" src="bower_components/filedrop/filedrop-min.js"></script>
+    <style type="text/css">
+
+
+        #preview-row {
+            position: relative;
+            width: auto;
+            padding: 12px;
+            border: 1px solid #ccc;
+        }
+
+        #drop-target {
+            top: 12px;
+            left: 12px;
+            width: 100px;
+            height: 100px;
+            background-color: #eee;
+            border: 1px solid #ccc;
+            text-align: center;
+            padding: 12px;
+        }
+
+        #preview {
+            width: auto;
+            margin-left: 148px;
+            height: 100px;
+            background-color: #eee;
+            padding: 12px;
+            border: 1px solid #ccc;
+        }
+    </style>
+</head>
+<body>
+<div class="demo-wrapper">
+
+    <h1>Drop a file</h1>
+        <div id="drop-target">Drop image file here.</div>
+</div>
+
+<canvas id="canvas" style="display:none"></canvas>
+<canvas id="canvasBlack" style="display:none"></canvas>
+
+
+<script type="text/javascript">
+
+
+    function render(src){
+        var image = new Image();
+        image.onload = function(){
+
+            var canvas = document.getElementById("canvas");
+
+            var ctx = canvas.getContext("2d");
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            canvas.width = image.width;
+            canvas.height = image.height;
+            ctx.drawImage(image, 0, 0, image.width, image.height);
+            convertToBW(image,true);
+            var resultBlobs = getBlobsOfBlack();
+
+            extractBlobs(resultBlobs);
+
+        };
+        image.src = src;
+    }
+
+    function loadImage(src){
+        //	Prevent any non-image file type from being read.
+        if(!src.type.match(/image.*/)){
+            console.log("The dropped file is not an image: ", src.type);
+            return;
+        }
+
+        //	Create our FileReader and run the results through the render function.
+        var reader = new FileReader();
+        reader.onload = function(e){
+            render(e.target.result);
+        };
+        reader.readAsDataURL(src);
+    }
+
+
+    function prepareDrop() {
+        var target = document.getElementById("drop-target");
+        target.addEventListener("dragover", function(e){e.preventDefault();}, true);
+        target.addEventListener("drop", function(e){
+            e.preventDefault();
+            loadImage(e.dataTransfer.files[0]);
+        }, true);
+    }
+
+    function convertToBW() {
+        var canvas = document.getElementById('canvas');
+        var ctx = canvas.getContext('2d');
+        var imageData = ctx.getImageData(0,0,canvas.width, canvas.height);
+        var data = imageData.data;
+
+
+        for (var i = 0; i < data.length; i += 4) {
+            var result = 0;
+
+            if(data[i] + data[i + 1] + data[i + 2] < 765) {
+                result = 0;
+            } else {
+                result = 255;
+            }
+            data[i]     = result;
+            data[i + 1] = result;
+            data[i + 2] = result;
+        }
+
+        var canvasBlack = document.getElementById('canvasBlack');
+        ctx = canvasBlack.getContext('2d');
+
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        canvasBlack.width = canvas.width;
+        canvasBlack.height = canvas.height;
+        ctx.putImageData(imageData, 0, 0);
+    }
+
+    function getBlobsOfBlack() {
+
+        var resultArray = [];
+        var canvas = document.getElementById('canvasBlack');
+        var ctx = canvas.getContext('2d');
+        var imageData = ctx.getImageData(0,0,canvas.width, canvas.height);
+        var data = imageData.data;
+
+
+        var foundBlackOriginRow = null;
+        var foundBlackEndRow = null;
+        var foundBlackOriginColumn = null;
+        var foundBlackEndColumn = null;
+        for(var j=0;j< imageData.height;j++) {
+
+
+            if(foundBlackEndRow) {
+                var c = ctx.getImageData(foundBlackOriginRow, j, 1, 1).data;
+                var c2 = ctx.getImageData(foundBlackEndRow, j, 1, 1).data;
+                if(c[0]+c[1]+c[2] == 0 && c2[0]+c2[1]+c2[2] == 0) {
+                    foundBlackEndColumn = j;
+                } else {
+                    if(foundBlackEndColumn - foundBlackOriginColumn > 20) {
+                        resultArray.push({
+                            x: foundBlackOriginRow,
+                            y: foundBlackOriginColumn,
+                            ex: foundBlackEndRow,
+                            ey: foundBlackEndColumn
+                        });
+                    }
+
+                    foundBlackOriginColumn = null;
+                    foundBlackOriginRow = null;
+                    foundBlackEndRow = null;
+                    foundBlackEndColumn = null;
+                }
+            } else {
+                for (var i = 0; i < imageData.width; i++) {
+                    var c = ctx.getImageData(i, j, 1, 1).data;
+                    if(c[0]+c[1]+c[2] == 0) {
+                        if(foundBlackOriginRow == null) {
+                            foundBlackOriginRow = i;
+                        } else {
+                            foundBlackEndRow = i;
+                        }
+                        foundBlackOriginColumn = j;
+                    } else {
+                        if(foundBlackEndRow) {
+                            if(foundBlackEndRow - foundBlackOriginRow < 400) {
+                                foundBlackOriginRow = null;
+                                foundBlackEndRow = null;
+                            }
+                        } else {
+                            foundBlackOriginRow = null;
+                        }
+                    }
+                }
+            }
+
+
+        }
+       return resultArray;
+    }
+
+    function extractBlobs(blobs) {
+        console.log(blobs);
+        var canvas = document.getElementById('canvas');
+        var ctx = canvas.getContext('2d');
+        for(var i in blobs){
+            var imageData = ctx.getImageData(blobs[i].x,blobs[i].y,blobs[i].ex-blobs[i].x,blobs[i].ey-blobs[i].y);
+
+            var textImage = document.createElement('div');
+            textImage.innerHTML = "Image #" + i;
+            var canvasImage = document.createElement('canvas');
+            var ctxImage = canvasImage.getContext('2d');
+            canvasImage.width  = imageData.width;
+            canvasImage.height = imageData.height;
+            ctxImage.putImageData(imageData, 0, 0);
+            document.body.appendChild(textImage);
+            document.body.appendChild(canvasImage);
+        }
+
+
+
+    }
+
+    prepareDrop();
+
+</script>
+
+
+</body>
+</html>
