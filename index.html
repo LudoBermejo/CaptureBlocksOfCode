@@ -5,6 +5,8 @@
     <title>Capture blocks of code</title>
 
     <script type="text/javascript" src="bower_components/filedrop/filedrop-min.js"></script>
+    <script type="text/javascript" src="bower_components/jszip/dist/jszip.min.js"></script>
+    <script type="text/javascript" src="bower_components/jszip/vendor/FileSaver.js"></script>
     <style type="text/css">
 
 
@@ -40,7 +42,7 @@
 <div class="demo-wrapper">
 
     <h1>Drop a file</h1>
-        <div id="drop-target">Drop image file here.</div>
+    <div id="drop-target">Drop image file here.</div>
 </div>
 
 <canvas id="canvas" style="display:none"></canvas>
@@ -189,25 +191,30 @@
     }
 
     function extractBlobs(blobs) {
-        console.log(blobs);
         var canvas = document.getElementById('canvas');
         var ctx = canvas.getContext('2d');
+
+        var zip = new JSZip();
         for(var i in blobs){
             var imageData = ctx.getImageData(blobs[i].x,blobs[i].y,blobs[i].ex-blobs[i].x,blobs[i].ey-blobs[i].y);
 
-            var textImage = document.createElement('div');
-            textImage.innerHTML = "Image #" + i;
             var canvasImage = document.createElement('canvas');
             var ctxImage = canvasImage.getContext('2d');
             canvasImage.width  = imageData.width;
             canvasImage.height = imageData.height;
             ctxImage.putImageData(imageData, 0, 0);
-            document.body.appendChild(textImage);
-            document.body.appendChild(canvasImage);
+
+            var dataURL = canvasImage.toDataURL("image/png");
+            // Add a file named "smile.gif" to that folder, from some Base64 data
+            zip.file("image"+i+".png", dataURL.substr(dataURL.indexOf(',')+1), {base64: true});
         }
 
+        var blob = zip.generate({type:"blob"});
+        // see FileSaver.js
+        saveAs(blob, "hello.zip");
 
 
+        alert("COmplete");
     }
 
     prepareDrop();

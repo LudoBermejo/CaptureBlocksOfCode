@@ -15,7 +15,8 @@
     "tests"
   ],
   "dependencies": {
-    "filedrop": "*"
+    "filedrop": "*",
+    "jszip": "^2.6.0"
   },
   "devDependencies": {
     "filedrop": "*"
